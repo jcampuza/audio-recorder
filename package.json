@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && workbox generateSW",
     "serve": "npm run build && vite preview"
   },
   "devDependencies": {
