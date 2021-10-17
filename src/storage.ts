@@ -19,6 +19,10 @@ export const getBlob = (key: string) => {
   return blobStore.getItem<Blob>(key);
 };
 
+export const deleteBlob = (key: string) => {
+  return blobStore.removeItem(key);
+};
+
 export const getAllBlobs = async () => {
   const items: Record<string, Blob> = {};
 

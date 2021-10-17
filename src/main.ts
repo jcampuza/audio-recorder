@@ -1,15 +1,8 @@
 import { combineLatest, fromEvent, merge, tap } from 'rxjs';
 import { StateSubject } from './state';
-import { getAllBlobs, setBlob } from './storage';
+import { deleteBlob, getAllBlobs, setBlob } from './storage';
 import './style.css';
-
-const audioEl = document.querySelector('#recorder') as HTMLAudioElement;
-const permissionsWarning = document.querySelector('#permissions-warning') as HTMLDivElement;
-const audiodevicesListEl = document.querySelector('#audiodeviceslist') as HTMLUListElement;
-const startRecordingEl = document.querySelector('#record-button') as HTMLButtonElement;
-const recordBtn = document.querySelector('#record-button') as HTMLButtonElement;
-const stopBtn = document.querySelector('#stop-button') as HTMLButtonElement;
-const recordsList = document.querySelector('#record-list') as HTMLUListElement;
+import { delegate } from './util';
 
 interface State {
   permission: boolean;
@@ -28,6 +21,14 @@ const state = new StateSubject<State>({
   isRecording: false,
   records: {},
 });
+
+const audioEl = document.querySelector('#recorder') as HTMLAudioElement;
+const permissionsWarning = document.querySelector('#permissions-warning') as HTMLDivElement;
+const audiodevicesListEl = document.querySelector('#audiodeviceslist') as HTMLUListElement;
+const startRecordingEl = document.querySelector('#record-button') as HTMLButtonElement;
+const recordBtn = document.querySelector('#record-button') as HTMLButtonElement;
+const stopBtn = document.querySelector('#stop-button') as HTMLButtonElement;
+const recordsList = document.querySelector('#record-list') as HTMLUListElement;
 
 const renderDevices = (devices: MediaDeviceInfo[], selectedDevice: MediaDeviceInfo | null) => {
   const renderItem = (device: MediaDeviceInfo) => {
@@ -63,7 +64,10 @@ const renderRecords = (records: Record<string, Blob>) => {
   const renderItem = (record: string) => `
     <li>
       <span>${record}</span>
-      <button data-record-url="${record}">Listen</button>
+      <div>
+        <button data-record-url="${record}" data-action="play">▶️</button>
+        <button data-record-url="${record}" data-action="delete">🗑</button>
+      </div>
     </li>
   `;
 
@@ -74,6 +78,7 @@ const stopRecording = () => {
   const s = state.getState();
 
   if (s.mediaRecorder) {
+    s.mediaRecorder.stream.getAudioTracks().forEach((t) => t.stop());
     s.mediaRecorder.stop();
   }
 
@@ -108,8 +113,7 @@ const startRecording = async () => {
 
   mediaRecorder.addEventListener('stop', async () => {
     await setBlob(new Blob(chunks));
-    const blobs = await getAllBlobs();
-    state.setState({ records: blobs });
+    await refreshLocalData();
   });
 
   mediaRecorder.start();
@@ -138,6 +142,11 @@ const setActiveAudioTrack = (key: string) => {
   audioEl.play();
 };
 
+const deleteAudioTrack = async (key: string) => {
+  await deleteBlob(key);
+  await refreshLocalData();
+};
+
 const getMediaDevices = async () => {
   const devices = await navigator.mediaDevices.enumerateDevices();
   const deviceInputs = devices.filter((device) => device.kind === 'audioinput');
@@ -152,7 +161,9 @@ const getMediaPermissions = async () => {
   let granted = false;
 
   try {
-    await navigator.mediaDevices.getUserMedia({ audio: true });
+    // Get the tracks and immediately stop them
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getAudioTracks().forEach((track) => track.stop());
     granted = true;
   } catch {}
 
@@ -167,15 +178,6 @@ const onStopButtonClick = () => {
   stopRecording();
 };
 
-const delegate = <T extends Event>(selector: string, handler: (e: T) => void) => {
-  return (e: T) => {
-    const target = e.target as HTMLElement;
-    if (target.matches(selector)) {
-      handler(e);
-    }
-  };
-};
-
 const onAudioListClick = (e: MouseEvent) => {
   const target = e.target as HTMLElement;
   setActiveDevice(target.dataset.deviceId!);
@@ -186,7 +188,15 @@ const onRecordListClick = (e: MouseEvent) => {
   setActiveAudioTrack(target.dataset.recordUrl!);
 };
 
-const getLocalData = async () => {
+const onRecordDelete = (e: MouseEvent) => {
+  const target = e.target as HTMLElement;
+  const confirmed = confirm(`Are you sure you want to delete ${target.dataset.recordUrl}?`);
+  if (confirmed) {
+    deleteAudioTrack(target.dataset.recordUrl!);
+  }
+};
+
+const refreshLocalData = async () => {
   const blobs = await getAllBlobs();
   state.setState({ records: blobs });
 };
@@ -201,8 +211,12 @@ const onAudioListClick$ = fromEvent<MouseEvent>(audiodevicesListEl, 'click').pip
   tap(delegate('[data-device-id]', onAudioListClick))
 );
 
-const onRecordListClick$ = fromEvent<MouseEvent>(recordsList, 'click').pipe(
-  tap(delegate('[data-record-url]', onRecordListClick))
+const onRecordListClickPlay$ = fromEvent<MouseEvent>(recordsList, 'click').pipe(
+  tap(delegate('[data-record-url][data-action="play"]', onRecordListClick))
+);
+
+const onRecordListClickDelete$ = fromEvent<MouseEvent>(recordsList, 'click').pipe(
+  tap(delegate('[data-record-url][data-action="delete"]', onRecordDelete))
 );
 
 const updateDevices$ = combineLatest([
@@ -223,9 +237,9 @@ const updateRecords$ = state
   .pipe(tap((records) => renderRecords(records)));
 
 const start = async () => {
+  await refreshLocalData();
   await getMediaPermissions();
   await getMediaDevices();
-  await getLocalData();
 };
 
 merge(
@@ -236,7 +250,8 @@ merge(
   onStartRecording$,
   onStopButtonClick$,
   onAudioListClick$,
-  onRecordListClick$
+  onRecordListClickPlay$,
+  onRecordListClickDelete$
 ).subscribe();
 
 start();
