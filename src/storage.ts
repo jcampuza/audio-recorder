@@ -10,7 +10,7 @@ const blobStore = localforage.createInstance({
 });
 
 export const setBlob = (value: Blob) => {
-  const _key = `recording_${new Date().toISOString()}`;
+  const _key = `${new Date().toISOString()}`;
 
   return blobStore.setItem(_key, value);
 };
@@ -31,4 +31,24 @@ export const getAllBlobs = async () => {
   });
 
   return items;
+};
+
+export const blobToBase64 = (blob: Blob) => {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result);
+    };
+
+    reader.onerror = (e) => {
+      reject(e);
+    };
+
+    reader.readAsDataURL(blob);
+  });
+};
+
+export const base64ToBlob = (base64: string) => {
+  return fetch(base64).then((res) => res.blob());
 };

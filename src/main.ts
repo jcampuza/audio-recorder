@@ -63,10 +63,10 @@ const renderPermissionsWarning = (permission: boolean) => {
 const renderRecords = (records: Record<string, Blob>) => {
   const renderItem = (record: string) => `
     <li>
-      <span>${record}</span>
-      <div>
-        <button data-record-url="${record}" data-action="play">▶️</button>
-        <button data-record-url="${record}" data-action="delete">🗑</button>
+      <span class="flex-1">${record}</span>
+      <div class="flex-none">
+        <button data-record-url="${record}" data-action="play">Play</button>
+        <button data-record-url="${record}" data-action="delete">Delete</button>
       </div>
     </li>
   `;
@@ -198,6 +198,7 @@ const onRecordDelete = (e: MouseEvent) => {
 
 const refreshLocalData = async () => {
   const blobs = await getAllBlobs();
+
   state.setState({ records: blobs });
 };
 

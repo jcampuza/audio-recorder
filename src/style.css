@@ -10,8 +10,6 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   position: relative;
-  text-align: center;
-  color: #222222;
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
@@ -20,11 +18,41 @@
   padding-bottom: 5rem;
 }
 
+.text-center {
+  text-align: center;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.flex-none {
+  flex: none;
+}
+
+:root {
+  --color-text: #222222;
+  --color-background: #ffffff;
+  --color-foreground: #efefef;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text: #eeeeee;
+    --color-background: #191919;
+    --color-foreground: #29292a;
+  }
+}
+
 body,
 html {
   margin: 0;
   padding: 0;
-  color: #222222;
+}
+
+body {
+  color: var(--color-text);
+  background-color: var(--color-background);
   font-size: 16px;
 }
 
@@ -53,14 +81,16 @@ li + li {
 
 button {
   background: #ddd;
+  border-radius: 1px;
   border: none;
   padding: 0.5rem 0.75rem;
-  box-shadow: 0 0px 2px 0px rgba(0, 0, 0, 0.67);
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.67);
 }
 
 .actions {
   position: fixed;
-  background-color: white;
+  background-color: var(--color-foreground);
+  box-shadow: 0px -1px 3px rgb(0 0 0 / 33%);
   bottom: 0;
   left: 0;
   width: 100%;
