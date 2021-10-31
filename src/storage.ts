@@ -23,11 +23,11 @@ export const deleteBlob = (key: string) => {
   return blobStore.removeItem(key);
 };
 
-export const getAllBlobs = async () => {
-  const items: Record<string, Blob> = {};
+export const getAllBlobKeys = async () => {
+  const items: Record<string, string> = {};
 
   await blobStore.iterate<Blob, void>((item, key) => {
-    items[key] = item;
+    items[key] = key;
   });
 
   return items;

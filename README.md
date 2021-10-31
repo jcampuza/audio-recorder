@@ -7,8 +7,8 @@ It's not super pretty but it does the job.
 
 ## Tools
 
-- rxjs
+- preact
+- hookstate
 - localForage
 - typescript
 - vite
-
