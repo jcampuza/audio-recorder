@@ -1,4 +1,4 @@
-import { deleteBlob, getAllBlobKeys } from './storage';
+import { deleteBlob, storageEvents, getAllBlobKeys, setBlob } from './storage';
 import { createState } from '@hookstate/core';
 
 interface State {
@@ -59,7 +59,6 @@ export const deleteAudioTrack = async (key: string) => {
   }
 
   await deleteBlob(key);
-  await refreshLocalData();
 };
 
 export const getMediaDevices = async () => {
@@ -91,8 +90,17 @@ export const refreshLocalData = async () => {
   appState.merge({ records: blobs });
 };
 
+export const finishRecording = async (blob: Blob) => {
+  await setBlob(blob);
+};
+
 export const init = async () => {
   await refreshLocalData();
   await getMediaPermissions();
   await getMediaDevices();
+
+  // Whenever a blob gets added/deleted refresh local state
+  return storageEvents.subscribe(() => {
+    refreshLocalData();
+  });
 };

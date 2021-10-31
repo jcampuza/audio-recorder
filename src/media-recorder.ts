@@ -1,13 +1,12 @@
 import { useEffect } from 'preact/hooks';
-import { refreshLocalData } from './state';
-import { setBlob } from './storage';
+import { finishRecording } from './state';
 
 interface MediaRecorderProps {
   isRecording: boolean;
   selectedDevice: MediaDeviceInfo | null;
 }
 
-const mediaRecorderImpl = (deviceId: string) => {
+const createRecorder = (deviceId: string) => {
   let recorder: MediaRecorder | null = null;
 
   const start = async () => {
@@ -18,6 +17,7 @@ const mediaRecorderImpl = (deviceId: string) => {
     });
 
     const chunks: Blob[] = [];
+
     recorder = new MediaRecorder(mediaStream, { mimeType: 'audio/webm' });
 
     recorder.addEventListener('dataavailable', (e) => {
@@ -26,13 +26,8 @@ const mediaRecorderImpl = (deviceId: string) => {
       }
     });
 
-    recorder.addEventListener('error', (e) => {
-      console.error(e);
-    });
-
-    recorder.addEventListener('stop', async () => {
-      await setBlob(new Blob(chunks));
-      await refreshLocalData();
+    recorder.addEventListener('stop', () => {
+      finishRecording(new Blob(chunks));
     });
 
     recorder.start();
@@ -60,8 +55,7 @@ export const MediaRecorderLogic = (props: MediaRecorderProps) => {
       return;
     }
 
-    const selectedDevice = props.selectedDevice;
-    const recorder = mediaRecorderImpl(selectedDevice.deviceId);
+    const recorder = createRecorder(props.selectedDevice.deviceId);
 
     recorder.start();
 

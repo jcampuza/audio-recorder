@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "@hookstate/core": "^3.0.13",
-    "classnames": "^2.3.1",
     "localforage": "^1.10.0",
     "preact": "^10.5.13"
   },

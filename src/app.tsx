@@ -1,5 +1,4 @@
 import { useState } from '@hookstate/core';
-import classnames from 'classnames';
 import { useEffect, useRef } from 'preact/hooks';
 import { MediaRecorderLogic } from './media-recorder';
 import {
@@ -74,13 +73,11 @@ const DeviceList = ({
     <div>
       <h3>Your Devices</h3>
 
-      <div
-        class={classnames({
-          hide: permission,
-        })}
-      >
-        <p>You'll need to grant audio device permissions to make recordings</p>
-      </div>
+      {permission ? (
+        <div>
+          <p>You'll need to grant audio device permissions to make recordings</p>
+        </div>
+      ) : null}
 
       <ul>{devices.map((device) => renderItem(device))}</ul>
     </div>
@@ -110,6 +107,7 @@ const RecordingsList = ({ records }: { records: Record<string, string> }) => {
       </div>
     </li>
   );
+
   return (
     <div>
       <h3>Your Recordings</h3>
