@@ -101,8 +101,6 @@ export const getMediaPermissions = async () => {
 export const refreshLocalData = async () => {
   const blobs = await getAllBlobKeys();
 
-  console.log(blobs);
-
   appState.merge({ records: blobs });
 };
 
@@ -111,7 +109,8 @@ export const finishRecording = async (blob: Blob) => {
 };
 
 export const init = async () => {
-  await Promise.all([getMediaPermissions(), getMediaDevices()]);
+  await getMediaPermissions();
+  await getMediaDevices();
 
   subscribeToAuthState((user) => {
     appState.merge({ isLoggedIn: user ? LoginStatus.loggedIn : LoginStatus.loggedOut });

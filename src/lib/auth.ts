@@ -29,7 +29,6 @@ export const logout = () => {
 
 export const subscribeToAuthState = (onChange: (user: User | null) => void) => {
   return onAuthStateChanged(auth, (user) => {
-    console.log('onChange', user);
     onChange(user);
   });
 };
