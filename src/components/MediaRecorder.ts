@@ -1,5 +1,5 @@
 import { useEffect } from 'preact/hooks';
-import { finishRecording } from './state';
+import { finishRecording, stopRecording } from '../lib/state';
 
 interface MediaRecorderProps {
   isRecording: boolean;
@@ -49,6 +49,8 @@ const createRecorder = (deviceId: string) => {
   };
 };
 
+export const MAX_TIME = 1000 * 60 * 10;
+
 export const MediaRecorderLogic = (props: MediaRecorderProps) => {
   useEffect(() => {
     if (!props.isRecording || !props.selectedDevice) {
@@ -59,8 +61,13 @@ export const MediaRecorderLogic = (props: MediaRecorderProps) => {
 
     recorder.start();
 
+    const maxLengthTimeout = setTimeout(() => {
+      stopRecording();
+    }, MAX_TIME);
+
     return () => {
       recorder.stop();
+      clearTimeout(maxLengthTimeout);
     };
   }, [props.isRecording]);
 

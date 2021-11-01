@@ -1,7 +1,7 @@
 import { render } from 'preact';
-import { App } from './app';
+import { App } from './components/App';
 import './index.css';
-import { init } from './state';
+import { init } from './lib/state';
 
-render(<App />, document.getElementById('app')!);
 init();
+render(<App />, document.getElementById('app')!);

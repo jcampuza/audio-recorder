@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@hookstate/core": "^3.0.13",
+    "firebase": "^9.2.0",
     "localforage": "^1.10.0",
     "preact": "^10.5.13"
   },

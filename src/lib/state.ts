@@ -1,17 +1,27 @@
 import { deleteBlob, storageEvents, getAllBlobKeys, setBlob } from './storage';
 import { createState } from '@hookstate/core';
+import { subscribeToAuthState } from './auth';
+import { StorageReference } from '@firebase/storage';
+
+export enum LoginStatus {
+  pending,
+  loggedIn,
+  loggedOut,
+}
 
 interface State {
   permission: boolean;
+  isLoggedIn: LoginStatus;
   devices: MediaDeviceInfo[];
   selectedDevice: MediaDeviceInfo | null;
   isRecording: boolean;
-  records: Record<string, string>;
+  records: Record<string, StorageReference>;
   activeTrack: string | null;
 }
 
 export const appState = createState<State>({
   permission: false,
+  isLoggedIn: LoginStatus.pending,
   devices: [],
   selectedDevice: null,
   isRecording: false,
@@ -49,7 +59,7 @@ export const setActiveAudioTrack = (key: string) => {
     return;
   }
 
-  appState.merge({ activeTrack: record });
+  appState.merge({ activeTrack: record.fullPath });
 };
 
 export const deleteAudioTrack = async (key: string) => {
@@ -63,11 +73,15 @@ export const deleteAudioTrack = async (key: string) => {
 
 export const getMediaDevices = async () => {
   const devices = await navigator.mediaDevices.enumerateDevices();
-  const deviceInputs = devices.filter((device) => device.kind === 'audioinput');
+
+  const deviceInputs = devices.filter((device) => device.kind === 'audioinput' && device.deviceId);
+
+  const selectedDevice =
+    deviceInputs.find((device) => device.deviceId === 'default') ?? deviceInputs[0] ?? null;
 
   appState.merge({
     devices: deviceInputs,
-    selectedDevice: devices[0] ?? null,
+    selectedDevice,
   });
 };
 
@@ -87,6 +101,8 @@ export const getMediaPermissions = async () => {
 export const refreshLocalData = async () => {
   const blobs = await getAllBlobKeys();
 
+  console.log(blobs);
+
   appState.merge({ records: blobs });
 };
 
@@ -95,12 +111,18 @@ export const finishRecording = async (blob: Blob) => {
 };
 
 export const init = async () => {
-  await refreshLocalData();
-  await getMediaPermissions();
-  await getMediaDevices();
+  await Promise.all([getMediaPermissions(), getMediaDevices()]);
+
+  subscribeToAuthState((user) => {
+    appState.merge({ isLoggedIn: user ? LoginStatus.loggedIn : LoginStatus.loggedOut });
+
+    if (user) {
+      refreshLocalData();
+    }
+  });
 
   // Whenever a blob gets added/deleted refresh local state
-  return storageEvents.subscribe(() => {
+  storageEvents.subscribe(() => {
     refreshLocalData();
   });
 };
