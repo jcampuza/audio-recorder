@@ -2,6 +2,7 @@ import { storage } from './firebase';
 import { ref, listAll, uploadBytes, deleteObject, getDownloadURL } from '@firebase/storage';
 import { getUserAuth } from './auth';
 
+const downloadUrlCache = new Map<string, string>();
 const storageRef = ref(storage);
 
 const getUserBlobStorageRef = () => {
@@ -56,9 +57,14 @@ export const deleteBlob = (key: string) => {
   return deleteObject(deleteRef).then(storageEvents.notify);
 };
 
-export const getBlobUrl = (key: string) => {
+export const getBlobUrl = (key: string, cache = downloadUrlCache) => {
+  const cached = cache.get(key);
+  if (cached) {
+    return cached;
+  }
+
   const getRef = ref(storageRef, key);
-  return getDownloadURL(getRef);
+  return getDownloadURL(getRef).then(tap((res) => downloadUrlCache.set(key, res)));
 };
 
 export const getAllBlobKeys = async () => {

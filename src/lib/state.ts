@@ -1,7 +1,8 @@
 import { deleteBlob, storageEvents, getAllBlobKeys, setBlob } from './storage';
-import { createState } from '@hookstate/core';
+import { createState, useState } from '@hookstate/core';
 import { subscribeToAuthState } from './auth';
 import { StorageReference } from '@firebase/storage';
+import { User } from '@firebase/auth';
 
 export enum LoginStatus {
   pending,
@@ -12,6 +13,7 @@ export enum LoginStatus {
 interface State {
   permission: boolean;
   isLoggedIn: LoginStatus;
+  user: User | null;
   devices: MediaDeviceInfo[];
   selectedDevice: MediaDeviceInfo | null;
   isRecording: boolean;
@@ -22,6 +24,7 @@ interface State {
 export const appState = createState<State>({
   permission: false,
   isLoggedIn: LoginStatus.pending,
+  user: null,
   devices: [],
   selectedDevice: null,
   isRecording: false,
@@ -113,7 +116,7 @@ export const init = async () => {
   await getMediaDevices();
 
   subscribeToAuthState((user) => {
-    appState.merge({ isLoggedIn: user ? LoginStatus.loggedIn : LoginStatus.loggedOut });
+    appState.merge({ isLoggedIn: user ? LoginStatus.loggedIn : LoginStatus.loggedOut, user });
 
     if (user) {
       refreshLocalData();
@@ -124,4 +127,10 @@ export const init = async () => {
   storageEvents.subscribe(() => {
     refreshLocalData();
   });
+};
+
+export const useGlobalState = () => {
+  const { value } = useState(appState);
+
+  return value;
 };

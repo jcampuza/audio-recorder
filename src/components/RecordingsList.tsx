@@ -5,12 +5,14 @@ const RecordListItem = ({ record }: { record: StorageReference }) => {
   const formattedName = new Date(Number(record.name.split('.webm')[0])).toLocaleString();
 
   return (
-    <li>
-      <span class="flex-1">{formattedName}</span>
+    <li className="mb-4 last:mb-0">
+      <span className="flex-1">{formattedName}</span>
 
-      <div class="flex-none">
+      <div className="flex-none">
         <button onClick={() => setActiveAudioTrack(record.fullPath)}>Play</button>
-        <button onClick={() => deleteAudioTrack(record.fullPath)}>Delete</button>
+        <button className="ml-2" onClick={() => deleteAudioTrack(record.fullPath)}>
+          Delete
+        </button>
       </div>
     </li>
   );
@@ -19,7 +21,7 @@ const RecordListItem = ({ record }: { record: StorageReference }) => {
 export const RecordingsList = ({ records }: { records: Record<string, StorageReference> }) => {
   return (
     <div>
-      <h3>Your Recordings</h3>
+      <h3 className="mb-4">Your Recordings</h3>
 
       <ul>
         {Object.values(records).map((record) => (

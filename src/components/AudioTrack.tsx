@@ -22,8 +22,8 @@ export const AudioTrack = ({ activeTrack }: { activeTrack: string | null }) => {
   }, [activeTrack]);
 
   return (
-    <div class="text-center">
-      <audio controls ref={ref}></audio>
+    <div>
+      <audio className="mx-auto" controls ref={ref}></audio>
     </div>
   );
 };
